@@ -1,0 +1,42 @@
+:root{--bg:#f7f7fb;--fg:#111;--card:#fff;--muted:#666;--border:#e6e6ef;--accent:#2563eb}
+@media (prefers-color-scheme: dark){:root{--bg:#0b0c10;--fg:#e5e7eb;--card:#111827;--muted:#a1a1aa;--border:#27272a;--accent:#60a5fa}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg)}
+.topbar{padding:16px 24px;background:var(--card);border-bottom:1px solid var(--border)}
+.container{max-width:1100px;margin:24px auto;padding:0 16px;display:grid;gap:16px}
+.card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:16px}
+h1,h2{margin:0 0 12px 0}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.actions.wrap{flex-wrap:wrap}
+button{background:var(--accent);color:white;border:none;border-radius:8px;padding:10px 14px;font-weight:600;cursor:pointer}
+button:hover{filter:brightness(1.05)}
+.log{background:#0b1020;color:#e0e6ff;border-radius:8px;padding:10px;max-height:200px;overflow:auto}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{border-bottom:1px solid var(--border);padding:8px;text-align:left}
+th{position:sticky;top:0;background:var(--card)}
+.footer{padding:12px 24px;color:var(--muted)}
+.lbl{display:block;font-weight:600;margin-bottom:6px}
+.muted{color:var(--muted)}
+.spacer{flex:1}
+.mt{margin-top:8px}
+.qb-grid{display:grid;grid-template-columns:1fr;gap:12px}
+@media(min-width:900px){.qb-grid{grid-template-columns:340px 1fr}}
+.steps{list-style:decimal;padding-left:18px;margin:0}
+.step{border:1px dashed var(--border);border-radius:8px;padding:8px;margin-bottom:8px;display:grid;gap:6px}
+.step-header{display:flex;gap:8px;align-items:center}
+.step-title{font-weight:600}
+.step small{color:var(--muted)}
+input,select,textarea{background:transparent;color:var(--fg);border:1px solid var(--border);border-radius:8px;padding:8px}
+textarea{min-height:70px}
+/* chips */
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{padding:6px 10px;border:1px solid var(--border);border-radius:999px;font-size:12px;background:var(--card);cursor:grab}
+.chip:active{cursor:grabbing}
+/* drag */
+.droppable{border:1px dashed var(--border);border-radius:8px;padding:8px;min-height:40px}
+.droppable.dragover{outline:2px dashed var(--accent)}
+/* table column drag */
+th[draggable="true"]{cursor:grab}
+th[draggable="true"]:active{cursor:grabbing}
+
+

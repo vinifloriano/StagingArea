@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Staging Area POC</title>
+    <link rel="stylesheet" href="styles.css" />
+    <script defer src="main.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="icon" href="data:,">
+    <meta name="color-scheme" content="light dark">
+    <meta name="description" content="POC for staging area: fetch, validate, transform, store, and query">
+    <style>html{font-family:Inter,system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif}</style>
+    <script>window.API_BASE = '';</script>
+    <script>
+      (function(){
+        const params = new URLSearchParams(location.search);
+        const api = params.get('api');
+        if(api){ window.API_BASE = api; }
+      })();
+    </script>
+    
+</head>
+<body>
+    <header class="topbar">
+        <h1>Staging Area - Demo</h1>
+    </header>
+    <main class="container">
+        <section class="card" id="qb">
+            <h2>Query Builder (Mock Data)</h2>
+            <div class="qb-grid">
+                <div>
+                    <label class="lbl">Primary dataset</label>
+                    <select id="datasetSelect"></select>
+                    <div class="mt"></div>
+                    <label class="lbl">Fields</label>
+                    <div id="fieldChips" class="chips"></div>
+                </div>
+                <div>
+                    <label class="lbl">Add step</label>
+                    <div class="actions wrap">
+                        <button data-step="filter">+ Filter</button>
+                        <button data-step="join">+ Join</button>
+                        <button data-step="group">+ Group/Aggregate</button>
+                        <button data-step="pivot">+ Pivot</button>
+                        <button data-step="compute">+ Compute</button>
+                        <button data-step="select">+ Select/Rename</button>
+                        <button data-step="sort">+ Sort</button>
+                        <button data-step="limit">+ Limit</button>
+                    </div>
+                </div>
+                <div class="pipeline">
+                    <label class="lbl">Pipeline</label>
+                    <ol id="pipelineList" class="steps" aria-label="Pipeline (drag to reorder)"></ol>
+                    <div class="actions">
+                        <button id="btnRun">Run Query</button>
+                        <button id="btnClear">Clear</button>
+                        <div class="spacer"></div>
+                        <button id="btnSavePreset">Save Preset</button>
+                        <select id="presetSelect"></select>
+                        <button id="btnLoadPreset">Load</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+        <section class="card">
+            <h2>Results</h2>
+            <div class="actions wrap">
+                <span id="resultMeta" class="muted"></span>
+                <div class="spacer"></div>
+                <button id="btnExportCsv">Export CSV</button>
+                <button id="btnExportJson">Export JSON</button>
+            </div>
+            <div id="tableContainer"></div>
+            <details class="mt">
+                <summary>Query JSON</summary>
+                <pre id="queryJson" class="log"></pre>
+            </details>
+        </section>
+    </main>
+    <footer class="footer">
+        <small>This POC uses mock data only. No API calls are made.</small>
+    </footer>
+</body>
+</html>
+
+
