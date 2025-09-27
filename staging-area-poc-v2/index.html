@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Query Builder - DevExtreme</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/devextreme@23.2/dist/css/dx.light.css" />
+  <link rel="stylesheet" href="assets/styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <div class="toolbar" id="toolbar">
+      <div class="toolbar-left">
+        <div class="toolbar-field">
+          <label>Tables</label>
+          <div id="tablesSelector"></div>
+        </div>
+        <div class="toolbar-field" id="joinConfigWrapper" style="display:none;">
+          <label>&nbsp;</label>
+          <div id="joinConfigBtn"></div>
+        </div>
+      </div>
+      <div class="toolbar-right">
+        <div class="toolbar-field">
+          <label>Limit</label>
+          <div class="filter-inline">
+            <div id="limitCount"></div>
+            <div id="limitOffset"></div>
+          </div>
+        </div>
+        <div class="toolbar-field">
+          <label>Filter</label>
+          <div class="filter-inline">
+            <div id="filterBtn"></div>
+            <div id="filterSummary" class="filter-summary" title="Current filter"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="main-grid">
+      <div class="kanban-area">
+        <div id="kanbanContainer" class="kanban-container"></div>
+      </div>
+      <div class="side-area">
+        <div class="side-section">
+          <div class="side-title">Group By</div>
+          <div id="groupByZone" class="drop-zone"></div>
+        </div>
+        <div class="side-section">
+          <div class="side-title">Order By</div>
+          <div id="orderByZone" class="drop-zone"></div>
+        </div>
+        <div class="side-section">
+          <div class="side-title">Aggregations</div>
+          <div id="aggZone" class="drop-zone"></div>
+        </div>
+      </div>
+      <div class="preview-area">
+        <div class="sql-box">
+          <div class="side-title">SQL Preview</div>
+          <pre id="sqlPreview"></pre>
+        </div>
+        <div id="previewGrid"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filter Popup -->
+  <div id="filterPopup">
+    <div class="popup-body">
+      <div id="filterBuilder"></div>
+      <div class="popup-actions">
+        <div id="filterApplyBtn"></div>
+        <div id="filterClearBtn"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Join Config Popup -->
+  <div id="joinPopup">
+    <div class="popup-body">
+      <div id="joinsGrid"></div>
+      <div class="popup-actions">
+        <div id="joinSaveBtn"></div>
+        <div id="joinCancelBtn"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Alias Editor Popup -->
+  <div id="aliasPopup">
+    <div class="popup-body">
+      <div id="aliasEditor"></div>
+      <div class="popup-actions">
+        <div id="aliasSaveBtn"></div>
+        <div id="aliasCancelBtn"></div>
+      </div>
+    </div>
+  </div>
+  <script src="https://ajax.aspnetcdn.com/ajax/jQuery/jquery-3.7.1.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/devextreme-dist/23.2.14/js/dx.all.js"></script>
+ 
+  <script src="assets/mockData.js"></script>
+  <script src="assets/app.js"></script>
+</body>
+</html>
+
+
