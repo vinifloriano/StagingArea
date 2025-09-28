@@ -29,11 +29,6 @@
   };
   var aliasEditState = { table: null, column: null, alias: '' };
   var limitState = { count: 50, offset: 0 };
-  var recomputeTimer = null;
-  function scheduleRecompute() {
-    if (recomputeTimer) clearTimeout(recomputeTimer);
-    recomputeTimer = setTimeout(function(){ recomputeAndRender(); }, 50);
-  }
 
   function getEl(id) {
     return document.getElementById(id);
@@ -41,31 +36,6 @@
 
   function fieldKey(path) {
     return String(path).replace(/\./g, '__');
-  }
-
-  function parseAliasToken(token) {
-    var colName = token;
-    var alias = null;
-    if (!token) return { colName: token, alias: null };
-    var asIdx = token.toLowerCase().indexOf(' as ');
-    var colonIdx = token.indexOf(':');
-    if (asIdx !== -1) { alias = token.substring(asIdx + 4).trim(); colName = token.substring(0, asIdx).trim(); }
-    else if (colonIdx !== -1) { alias = token.substring(colonIdx + 1).trim(); colName = token.substring(0, colonIdx).trim(); }
-    return { colName: colName, alias: alias };
-  }
-
-  function formatSelectQualified(table, token) {
-    var p = parseAliasToken(token);
-    var qualified = table + '.' + p.colName;
-    return { qualified: qualified, alias: p.alias, dataField: fieldKey(qualified) };
-  }
-
-  function isColumnSelectedWithOrWithoutAlias(selectedList, columnName) {
-    var base = columnName.toLowerCase();
-    return (selectedList || []).some(function (x) {
-      var low = String(x).toLowerCase();
-      return low === base || low.startsWith(base + ' as ') || low.startsWith(base + ':');
-    });
   }
 
   function sanitizeRowKeys(row) {
@@ -137,7 +107,7 @@
         $('#joinConfigWrapper').toggle(selectedTables.length > 1);
         renderKanban();
         refreshFilterBuilderFields();
-        scheduleRecompute();
+        recomputeAndRender();
       },
     });
 
@@ -159,7 +129,7 @@
         format: '#',
         showSpinButtons: true,
         placeholder: 'Count',
-        onValueChanged: function(e) { limitState.count = e.value || 0; scheduleRecompute(); }
+        onValueChanged: function(e) { limitState.count = e.value || 0; recomputeAndRender(); }
       });
     }
     var limitOffsetEl = getEl('limitOffset');
@@ -170,7 +140,7 @@
         format: '#',
         showSpinButtons: true,
         placeholder: 'Offset',
-        onValueChanged: function(e) { limitState.offset = e.value || 0; scheduleRecompute(); }
+        onValueChanged: function(e) { limitState.offset = e.value || 0; recomputeAndRender(); }
       });
     }
   }
@@ -226,7 +196,7 @@
           var sumEl = getEl('filterSummary');
           if (sumEl) sumEl.textContent = filterExpr ? JSON.stringify(filterExpr) : '';
           if (instances.filterPopup) instances.filterPopup.hide();
-          scheduleRecompute();
+          recomputeAndRender();
         },
       });
     }
@@ -240,7 +210,7 @@
           var sumEl = getEl('filterSummary');
           if (sumEl) sumEl.textContent = '';
           if (instances.filterBuilder) instances.filterBuilder.option('value', null);
-          scheduleRecompute();
+          recomputeAndRender();
         },
       });
     }
@@ -298,7 +268,7 @@
     selectedColumnsByTable[aliasEditState.table].push(toAdd);
     if (instances.aliasPopup) instances.aliasPopup.hide();
     renderKanban();
-    scheduleRecompute();
+    recomputeAndRender();
   }
 
   function buildFilterFields() {
@@ -351,7 +321,7 @@
         filterExpr = e.value || null;
         var sumEl = getEl('filterSummary');
         if (sumEl) sumEl.textContent = filterExpr ? JSON.stringify(filterExpr) : '';
-        scheduleRecompute();
+        recomputeAndRender();
       },
     });
   }
@@ -439,7 +409,7 @@
           var data = grid.getDataSource().items();
           joins = data.map(function (d) { return { type: d.type, leftTable: d.leftTable, leftColumn: d.leftColumn, rightTable: d.rightTable, rightColumn: d.rightColumn }; });
           if (instances.joinPopup) instances.joinPopup.hide();
-          scheduleRecompute();
+          recomputeAndRender();
         },
       });
     }
@@ -490,7 +460,7 @@
         rightColumn: d.rightColumn,
       };
     });
-    scheduleRecompute();
+    recomputeAndRender();
   }
 
   function renderKanban() {
@@ -510,7 +480,7 @@
         var list = selectedColumnsByTable[t] || [];
         var selAliased = list.find(function (x) {
           var base = col.name.toLowerCase();
-          var low = String(x).toLowerCase();
+          var low = x.toLowerCase();
           return low.startsWith(base + ' as ') || low.startsWith(base + ':');
         });
         if (selAliased) {
@@ -518,7 +488,7 @@
           if (a) display = col.name + ' → ' + a.trim();
         }
         $item.text(display);
-        if (isColumnSelectedWithOrWithoutAlias(list, col.name)) { $item.addClass('selected'); }
+        if ((list.map(function(x){return x.split(/\s+as\s+/i)[0].split(':')[0];}).indexOf(col.name) !== -1)) { $item.addClass('selected'); }
         $cols.append($item);
       });
 
@@ -592,7 +562,7 @@
         // consider both plain and aliased entries when toggling
         var idx = list.findIndex(function (x) {
           var base = column.toLowerCase();
-          var low = String(x).toLowerCase();
+          var low = x.toLowerCase();
           return low === base || low.startsWith(base + ' as ') || low.startsWith(base + ':');
         });
         if (idx === -1) {
@@ -603,7 +573,7 @@
           $(el).removeClass('selected');
         }
         renderKanban();
-        scheduleRecompute();
+        recomputeAndRender();
       }, clickDelayMs);
     });
 
@@ -655,7 +625,7 @@
       });
       $sel.on('change', function () { a.func = this.value; if (!a.alias || /_(count|sum|avg|min|max)$/.test(a.alias)) { a.alias = a.table + '_' + a.column + '_' + a.func; } recomputeAndRender(); });
       var $label = $('<span></span>').text(' ' + a.table + '.' + a.column + ' AS ');
-      var $alias = $('<input type="text"/>').val(a.alias || (a.table + '_' + a.column + '_' + a.func)).on('input', function () { a.alias = this.value; scheduleRecompute(); });
+      var $alias = $('<input type="text"/>').val(a.alias || (a.table + '_' + a.column + '_' + a.func)).on('input', function () { a.alias = this.value; recomputeAndRender(); });
       var $rm = $('<a href="#" class="remove">✕</a>').on('click', function (e) { e.preventDefault(); aggregates.splice(idx, 1); renderAggChips(); recomputeAndRender(); });
       $chip.append($sel).append($label).append($alias).append($rm);
       $z.append($chip);
@@ -786,9 +756,17 @@
     selectedTables.forEach(function (t) {
       // use only explicitly selected columns; no fallback to all columns
       var sel = selectedColumnsByTable[t] || [];
-      sel.forEach(function (token) {
-        var f = formatSelectQualified(t, token);
-        cols.push({ dataField: f.dataField, caption: f.qualified, captionAlias: f.alias });
+      sel.forEach(function (c) {
+        var original = t + '.' + c;
+        // Support alias via syntax columnName AS alias or columnName:alias
+        var colName = c;
+        var alias = null;
+        var asIdx = c.toLowerCase().indexOf(' as ');
+        var colonIdx = c.indexOf(':');
+        if (asIdx !== -1) { alias = c.substring(asIdx + 4).trim(); colName = c.substring(0, asIdx).trim(); }
+        else if (colonIdx !== -1) { alias = c.substring(colonIdx + 1).trim(); colName = c.substring(0, colonIdx).trim(); }
+        var qualified = t + '.' + colName;
+        cols.push({ dataField: fieldKey(qualified), caption: qualified, captionAlias: alias });
       });
     });
     // include aggregate outputs as columns when grouping
@@ -1056,6 +1034,29 @@
 
   function buildSqlPreview() {
     if (selectedTables.length === 0) return '-- Select at least one table';
+
+    function parseAliasToken(token) {
+      var colName = token;
+      var alias = null;
+      if (!token) return { colName: token, alias: null };
+      var asIdx = token.toLowerCase().indexOf(' as ');
+      var colonIdx = token.indexOf(':');
+      if (asIdx !== -1) { alias = token.substring(asIdx + 4).trim(); colName = token.substring(0, asIdx).trim(); }
+      else if (colonIdx !== -1) { alias = token.substring(colonIdx + 1).trim(); colName = token.substring(0, colonIdx).trim(); }
+      return { colName: colName, alias: alias };
+    }
+
+    function sqlJsonValue(alias, path) {
+      return "JSON_VALUE(" + alias + ".Content, '$." + path + "')";
+    }
+
+    function sqlExprForField(field) {
+      var parts = String(field).split('.');
+      var alias = parts.shift();
+      var path = parts.join('.');
+      return sqlJsonValue(alias, path);
+    }
+
     var parts = [];
 
     // SELECT
@@ -1065,13 +1066,15 @@
         ? selectedColumnsByTable[t]
         : [];
       sel.forEach(function (token) {
-        var f = formatSelectQualified(t, token);
-        selectCols.push(f.alias ? (f.qualified + ' AS ' + f.alias) : f.qualified);
+        var p = parseAliasToken(token);
+        var expr = sqlJsonValue(t, p.colName);
+        selectCols.push(p.alias ? (expr + ' AS ' + p.alias) : (expr + ' AS ' + (t + '_' + p.colName.replace(/\./g, '_'))));
       });
     });
-    if (groupBy.length > 0 && aggregates.length > 0) {
+    // Aggregates (if any)
+    if (groupBy.length > 0 && typeof aggregates !== 'undefined' && aggregates.length > 0) {
       aggregates.forEach(function (a) {
-        var expr = a.func.toUpperCase() + '(' + a.table + '.' + a.column + ')';
+        var expr = a.func.toUpperCase() + '(' + sqlJsonValue(a.table, a.column) + ')';
         selectCols.push(a.alias ? (expr + ' AS ' + a.alias) : expr);
       });
     }
@@ -1080,42 +1083,55 @@
     }
     parts.push('SELECT ' + selectCols.join(', '));
 
-    // FROM + JOINS
-    parts.push('FROM ' + selectedTables[0]);
+    // FROM + self-JOINS on DefaultStagingData, aliasing by table name
+    parts.push('FROM DefaultStagingData ' + selectedTables[0]);
     var currentBase = selectedTables[0];
     selectedTables.slice(1).forEach(function (t) {
-      var j = joins.find(function (x) {
+      var j = (joins && joins.find) ? (joins.find(function (x) {
         return (x.leftTable === currentBase && x.rightTable === t) || (x.leftTable === t && x.rightTable === currentBase);
-      }) || inferJoin(currentBase, t);
+      }) || null) : null;
+      if (!j) { j = inferJoin(currentBase, t); }
       var type = (j.type || 'inner').toUpperCase();
-      var l = j.leftTable + '.' + (j.leftColumn || 'id');
-      var r = j.rightTable + '.' + (j.rightColumn || 'id');
-      parts.push(type + ' JOIN ' + (j.leftTable === currentBase ? j.rightTable : j.leftTable) + ' ON ' + l + ' = ' + r);
+      var leftAlias = j.leftTable;
+      var rightAlias = j.rightTable;
+      var leftPath = j.leftColumn || 'id';
+      var rightPath = j.rightColumn || 'id';
+      parts.push(type + ' JOIN DefaultStagingData ' + (leftAlias === currentBase ? rightAlias : leftAlias) + ' ON '
+        + sqlJsonValue(leftAlias, leftPath) + ' = ' + sqlJsonValue(rightAlias, rightPath));
       currentBase = t;
     });
 
-    // WHERE
+    // WHERE (batch filters per alias) + filter expression
+    var whereParts = [];
+    // Per-alias latest batch filter
+    selectedTables.forEach(function (t) {
+      whereParts.push(t + ".DefaultStagingDataBatchId = (select top 1 Id from DefaultStagingDataBatch where DrawflowIdentifier = '" + t + "' order by CreatedAt desc)");
+    });
     if (filterExpr) {
-      parts.push('WHERE ' + stringifyFilter(filterExpr));
+      var wf = stringifyFilterForJson(filterExpr);
+      if (wf) whereParts.push(wf);
+    }
+    if (whereParts.length > 0) {
+      parts.push('WHERE ' + whereParts.join(' AND '));
     }
 
     // GROUP BY
     if (groupBy.length > 0) {
-      var g = groupBy.map(function (x) { return x.table + '.' + x.column; });
+      var g = groupBy.map(function (x) { return sqlJsonValue(x.table, x.column); });
       parts.push('GROUP BY ' + g.join(', '));
     }
 
     // ORDER BY
     if (orderBy.length > 0) {
-      var o = orderBy.map(function (x) { return x.table + '.' + x.column + (x.desc ? ' DESC' : ' ASC'); });
+      var o = orderBy.map(function (x) { return sqlJsonValue(x.table, x.column) + (x.desc ? ' DESC' : ' ASC'); });
       parts.push('ORDER BY ' + o.join(', '));
     }
 
     // LIMIT/OFFSET
-    if (limitState.count && limitState.count > 0) {
+    if (typeof limitState !== 'undefined' && limitState.count && limitState.count > 0) {
       parts.push('LIMIT ' + Math.max(0, parseInt(limitState.count, 10)));
     }
-    if (limitState.offset && limitState.offset > 0) {
+    if (typeof limitState !== 'undefined' && limitState.offset && limitState.offset > 0) {
       parts.push('OFFSET ' + Math.max(0, parseInt(limitState.offset, 10)));
     }
 
@@ -1160,6 +1176,46 @@
     if (op === 'endswith') { sqlOp = 'LIKE'; val = '%' + String(val); }
     if (typeof val === 'string') val = "'" + val.replace(/'/g, "''") + "'";
     return unsanitizedField + ' ' + sqlOp + ' ' + val;
+  }
+
+  // Helpers to generate SQL WHERE using JSON_VALUE(alias.Content, '$.path')
+  function stringifyFilterForJson(expr) {
+    if (!expr) return '';
+    if (Array.isArray(expr)) {
+      if (expr.length === 3 && typeof expr[0] === 'string') {
+        return simplePredicateToSqlJson(expr);
+      }
+      var out = [];
+      for (var i = 0; i < expr.length; i++) {
+        var token = expr[i];
+        if (Array.isArray(token)) {
+          out.push('(' + stringifyFilterForJson(token) + ')');
+        } else if (typeof token === 'string' && (token.toLowerCase() === 'and' || token.toLowerCase() === 'or')) {
+          out.push(token.toUpperCase());
+        }
+      }
+      return out.join(' ');
+    }
+    return '';
+  }
+
+  function simplePredicateToSqlJson(p) {
+    var field = p[0];
+    var op = p[1];
+    var val = p[2];
+    // support sanitized keys
+    var unsanitizedField = String(field).indexOf('__') !== -1 ? String(field).replace(/__/g, '.') : String(field);
+    var parts = unsanitizedField.split('.');
+    var alias = parts.shift();
+    var path = parts.join('.');
+    var lhs = "JSON_VALUE(" + alias + ".Content, '$." + path + "')";
+    var sqlOp = op;
+    if (op === 'contains') { sqlOp = 'LIKE'; val = '%' + val + '%'; }
+    if (op === 'notcontains') { sqlOp = 'NOT LIKE'; val = '%' + val + '%'; }
+    if (op === 'startswith') { sqlOp = 'LIKE'; val = String(val) + '%'; }
+    if (op === 'endswith') { sqlOp = 'LIKE'; val = '%' + String(val); }
+    if (typeof val === 'string') val = "'" + String(val).replace(/'/g, "''") + "'";
+    return lhs + ' ' + sqlOp + ' ' + val;
   }
 
   $(init);
